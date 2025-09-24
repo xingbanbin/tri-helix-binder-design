@@ -1,5 +1,5 @@
 # 三螺旋束 Binder 的设计方法  
-以 **TNFR1-S1B2** 与 **SzM-S2B10** 为例
+以 **TNFR1-S1B2** 与 **SzM-binder3** 为例
 
 ---
 
@@ -25,7 +25,7 @@
   - 初始速度：310 K，随机数种子来自系统  
 
 - **生产模拟**  
-  - 时间：100 ns  
+  - 时间：300 ns  
   - 积分器：`leap-frog`  
   - 温控：`V-rescale`，目标温度 310 K  
   - 压控：`Parrinello-Rahman`，目标压力 1 bar  
