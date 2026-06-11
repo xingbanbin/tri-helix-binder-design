@@ -1,65 +1,65 @@
-# 三螺旋束 Binder 的设计方法  
-以 **TNFR1-S1B2** 与 **SzM-binder3** 为例
+# Design Method for Three-Helix Bundle Binders
+Using **TNFR1-S1B2** and **SzM-binder3** as Examples
 
 ---
 
-## Step 1：Binder–靶蛋白复合物的分子动力学模拟与结合自由能计算
+## Step 1: Molecular Dynamics Simulation and Binding Free Energy Calculation of Binder–Target Complexes
 
-### 1.1 模拟体系构建  
-- **力场与溶剂模型**  
-  - 蛋白力场：`AMBER14SB_parmbsc1`  
-  - 水分子模型：`TIP3P`  
-- **溶剂盒子**  
-  - 使用长方体水盒，蛋白质位于盒子中心  
-  - 距离盒子边界：1.2 nm  
-- **平衡步骤**  
-  - NVT 与 NPT 平衡，均采用三维周期性边界条件  
-  - 对蛋白施加位置约束，避免初始剧烈运动  
-  - 积分器：`leap-frog`，时间 100 ps  
-  - 约束算法：`LINCS`，对氢键约束  
-  - 邻居列表：`Verlet` + `Grid`  
-  - 静电与范德华相互作用截断距离：1.2 nm  
-  - 长程静电：`PME`，插值阶数 = 4  
-  - 温度耦合：`V-rescale`，蛋白与非蛋白部分分组  
-  - 压力耦合：`Parrinello-Rahman`  
-  - 初始速度：310 K，随机数种子来自系统  
+### 1.1 Simulation System Setup
+- **Force Field and Solvent Model**
+  - Protein force field: `AMBER14SB_parmbsc1`
+  - Water model: `TIP3P`
+- **Solvent Box**
+  - Use a rectangular water box with the protein centered
+  - Distance from box boundary: 1.2 nm
+- **Equilibration Steps**
+  - NVT and NPT equilibration, both with three-dimensional periodic boundary conditions
+  - Apply position restraints on the protein to avoid initial violent motion
+  - Integrator: `leap-frog`, duration 100 ps
+  - Constraint algorithm: `LINCS`, constraining hydrogen bonds
+  - Neighbor list: `Verlet` + `Grid`
+  - Cutoff distance for electrostatic and van der Waals interactions: 1.2 nm
+  - Long-range electrostatics: `PME`, interpolation order = 4
+  - Temperature coupling: `V-rescale`, with separate groups for protein and non-protein parts
+  - Pressure coupling: `Parrinello-Rahman`
+  - Initial velocities: 310 K, random seed from the system
 
-- **生产模拟**  
-  - 时间：300 ns  
-  - 积分器：`leap-frog`  
-  - 温控：`V-rescale`，目标温度 310 K  
-  - 压控：`Parrinello-Rahman`，目标压力 1 bar  
-  - 静电：`PME`  
-  - 范德华：截断 + 力平滑切换  
-  - 氢键：全约束  
+- **Production Simulation**
+  - Duration: 300 ns
+  - Integrator: `leap-frog`
+  - Temperature control: `V-rescale`, target temperature 310 K
+  - Pressure control: `Parrinello-Rahman`, target pressure 1 bar
+  - Electrostatics: `PME`
+  - van der Waals: cutoff + force-switch smoothing
+  - Hydrogen bonds: fully constrained
 
-### 1.2 结合自由能计算  
-- 使用 **gmx_MMPBSA** 工具  
-- 输入：MD 稳定阶段的 `.xtc` 轨迹  
-- 参数：  
-  - 力场：`leaprc.ff99SB`  
-  - 温度：310 K  
-  - 能量分解：分析 6 Å 结合界面范围内的残基  
-- 目的：确定对结合贡献最大的关键氨基酸  
-
----
-
-## Step 2：螺旋束的提取与组装
-- 将 binder 拆分为单独的螺旋束  
-- 根据 **Step 1** 的能量分解结果与关键氨基酸残基贡献对螺旋束排序  
-- 选择方式：  
-  - TNFR1 Binder 中排名前二的螺旋束  
-  - SzM Binder 中排名第一的螺旋束  
-- 使用 **PyMOL** 调整三根螺旋束的相对空间位置，确保结合界面暴露在表面  
+### 1.2 Binding Free Energy Calculation
+- Using the **gmx_MMPBSA** tool
+- Input: `.xtc` trajectory from the stable MD production phase
+- Parameters:
+  - Force field: `leaprc.ff99SB`
+  - Temperature: 310 K
+  - Energy decomposition: analyze residues within a 6 Å binding interface
+- Purpose: identify key amino acids that contribute most to binding
 
 ---
 
-## Step 3：RFdiffusion 设计三螺旋束之间的 Linker
-- Linker 长度：4–7 个氨基酸  
-- 随机设计 100 种 linker 组合  
-- 筛选：人工检查长度与空间适配性  
+## Step 2: Extraction and Assembly of Helix Bundles
+- Split the binder into individual helices
+- Rank the helices based on the energy decomposition results from Step 1 and the contribution of key amino acid residues
+- Selection criteria:
+  - Top two helices from the TNFR1 Binder
+  - Top one helix from the SzM Binder
+- Use **PyMOL** to adjust the relative spatial positions of the three helices to ensure the binding interfaces are exposed on the surface
 
-命令示例：
+---
+
+## Step 3: RFdiffusion Design of Linkers Between Three-Helix Bundles
+- Linker length: 4–7 amino acids
+- Randomly design 100 linker combinations
+- Screening: manual inspection of length and spatial compatibility
+
+Example command:
 ```bash
 Path_to_RFdiffusion/scripts/run_inference.py \
   inference.output_prefix=example_outputs/design_motifscaffolding \
@@ -68,26 +68,26 @@ Path_to_RFdiffusion/scripts/run_inference.py \
   inference.num_designs=100
 ```
 
-## Step 4：ProteinMPNN 进行序列填充与优化
+## Step 4: ProteinMPNN Sequence Inpainting and Optimization
 
-- **目标**：
-  - 为 linker 填充序列
-  - 对三螺旋内部可能存在的斥力进行氨基酸优化
-- MPNN模型：`HyperMPNN (v48_020_epoch300_hyper)`
-- 脚本示例：`mpnn_fixed_design.sh`
+- **Objectives**:
+  - Fill sequences for the linkers
+  - Optimize amino acids to resolve potential steric clashes within the three-helix bundle
+- MPNN model: `HyperMPNN (v48_020_epoch300_hyper)`
+- Example script: `mpnn_fixed_design.sh`
 
 ------
 
-## Step 5：ColabFold 预测序列填充后的结构
+## Step 5: ColabFold Structure Prediction of Inpainted Sequences
 
-- 使用 `colabfold_batch` 预测填充序列后的结构
-- 结构筛选：
-  - **目视检查**：三螺旋是否完整折叠
-  - **脚本分析**：
-    - `pLDDT.py` 评估模型可信度
-    - `RMSD_calculate.py` 比较 Cα RMSD，越小表示结构保持更一致
+- Use `colabfold_batch` to predict the structure after sequence inpainting
+- Structure screening:
+  - **Visual inspection**: whether the three-helix bundle is fully folded
+  - **Script analysis**:
+    - `pLDDT.py` to evaluate model confidence
+    - `RMSD_calculate.py` to compare Cα RMSD; smaller values indicate more consistent structure maintenance
 
-命令示例：
+Example command:
 
 ```
 colabfold_batch input.fasta colab_out_dir
@@ -95,13 +95,13 @@ colabfold_batch input.fasta colab_out_dir
 
 ------
 
-## Step 6：ProteinMPNN + FastRelax 进行界面优化
+## Step 6: ProteinMPNN + FastRelax Interface Optimization
 
-- 构建 **SzM–binder–TNFR1 三元复合物**
-- 使用 `dl_interface_design.py` 进行结合界面序列优化
-- 参考仓库：[dl_binder_design](https://github.com/nrbennet/dl_binder_design)
+- Construct the **SzM–binder–TNFR1 ternary complex**
+- Use `dl_interface_design.py` for binding interface sequence optimization
+- Reference repository: [dl_binder_design](https://github.com/nrbennet/dl_binder_design)
 
-命令示例：
+Example command:
 
 ```
 dl_interface_design.py -pdbdir path/to/pdbdir -outpdbdir ./mpnnfr_out
@@ -109,21 +109,21 @@ dl_interface_design.py -pdbdir path/to/pdbdir -outpdbdir ./mpnnfr_out
 
 ------
 
-## Step 7：ColabFold 筛选双靶标结合的 Binder
+## Step 7: ColabFold Screening of Dual-Target Binding Binders
 
-- 分别预测：
-  - binder–SzM 复合物
-  - binder–TNFR1 复合物
-- 筛选指标：
-  - pLDDT、pTM 得分排序
-  - 可视化验证三螺旋束是否符合预期功能：
-    - 螺旋束 1 → 特异性结合 SzM
-    - 螺旋束 2 → 同时结合 SzM 和 TNFR1
-    - 螺旋束 3 → 特异性结合 TNFR1
+- Predict separately:
+  - binder–SzM complex
+  - binder–TNFR1 complex
+- Screening metrics:
+  - Rank by pLDDT and pTM scores
+  - Visually validate whether the three-helix bundle conforms to the expected function:
+    - Helix 1 → Specifically binds SzM
+    - Helix 2 → Simultaneously binds SzM and TNFR1
+    - Helix 3 → Specifically binds TNFR1
 
 ------
 
-## Step 8：Binder–靶标复合物 MD 模拟与结合亲和力评估
+## Step 8: MD Simulation and Binding Affinity Evaluation of Binder–Target Complexes
 
-- 与 **Step 1** 相同的模拟与能量计算参数
-- 目的：筛选出最优 binder 候选，进入实验验证
+- Same simulation and energy calculation parameters as in Step 1
+- Purpose: screen for the optimal binder candidate for experimental validation
